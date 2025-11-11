@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+
+# Env
+.env
+venv/
+.env.local
+env/
+.venv/
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Byte-compiled / cache
+.pytest_cache/
+.cache/
+
+# FastAPI / Uvicorn
+*.log
+
+# Migrations (Alembic)
+alembic/versions/*.pyc
+alembic/versions/__pycache__/
+
+# Distribution / packaging
+build/
+dist/
+*.spec
+
+# OS
+.DS_Store
+Thumbs.db
