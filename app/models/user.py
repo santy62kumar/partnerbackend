@@ -10,7 +10,9 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     phone_number = Column(String, unique=True, index=True, nullable=False)
-    address = Column(String, nullable=False)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    city = Column(String, nullable=False)
     pincode = Column(String, nullable=False)
     
     # Verification flags

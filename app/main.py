@@ -4,8 +4,6 @@ from app.database import engine, Base
 from app.api.v1 import auth, verification, jobs
 
 
-
-
 # Create database tables
 Base.metadata.create_all(bind=engine)
 

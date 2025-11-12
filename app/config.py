@@ -4,6 +4,10 @@ from typing import Optional
 
 class Settings(BaseSettings):
     # Database
+    DB_HOST: str
+    DB_NAME: str
+    DB_USER: str
+    DB_PASS: str
     DATABASE_URL: str
     
     # JWT

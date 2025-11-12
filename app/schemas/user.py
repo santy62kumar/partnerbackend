@@ -6,7 +6,9 @@ import uuid
 
 class UserRegistration(BaseModel):
     phone_number: str = Field(..., description="phone_number number with or without country code")
-    address: str = Field(..., min_length=10, max_length=500)
+    first_name: str = Field(..., min_length=2, max_length=100)
+    last_name: str = Field(..., min_length=2, max_length=100)
+    city: str = Field(..., min_length=2, max_length=100)
     pincode: str = Field(..., pattern=r'^\d{6}$')
     
     @validator('phone_number')
@@ -48,7 +50,9 @@ class BankVerification(BaseModel):
 class UserResponse(BaseModel):
     id: int
     phone_number: str
-    address: str
+    first_name: str
+    last_name: str
+    city: str
     pincode: str
     is_verified: bool
     is_pan_verified: bool

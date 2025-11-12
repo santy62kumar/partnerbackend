@@ -34,7 +34,9 @@ def register_user(user_data: UserRegistration, db: Session = Depends(get_db)):
     # Create new user
     new_user = User(
         phone_number=user_data.phone_number,
-        address=user_data.address,
+        first_name=user_data.first_name,
+        last_name=user_data.last_name,
+        city=user_data.city,
         pincode=user_data.pincode,
         is_verified=False
     )
@@ -64,9 +66,9 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         )
     
     # Generate and send OTP
-    # Extract first name from address or use default
-    first_name = user.address.split()[0] if user.address else "User"
-    
+    # Extract first name from phone number or use default
+    first_name = user.first_name.split()[0] if user.phone_number else "User"
+
     # otp_result = OTPService.send_otp(phone_number, first_name)
     otp_result = OTPService.send_otp(db, phone_number, first_name)
 
@@ -142,7 +144,7 @@ def resend_otp(login_data: LoginRequest, db: Session = Depends(get_db)):
         )
     
     # Generate and send OTP
-    first_name = user.address.split()[0] if user.address else "User"
+    first_name = user.first_name.split()[0] if user.phone_number else "User"
     otp_result = OTPService.send_otp(phone_number, first_name)
     
     if not otp_result["success"]:
