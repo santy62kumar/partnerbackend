@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.user import User
-from app.models.job import Job
+from app.model.ip import ip
+from app.model.job import Job
 
-from app.schemas.user import (
+from app.schemas.ip import (
     PANVerification, 
     BankVerification,
     UserDetailResponse
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/verification", tags=["Verification"])
 @router.post("/pan")
 def verify_pan(
     pan_data: PANVerification,
-    current_user: User = Depends(get_verified_user),
+    current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
     """Verify PAN card details"""
@@ -58,7 +58,7 @@ def verify_pan(
 @router.post("/bank")
 def verify_bank(
     bank_data: BankVerification,
-    current_user: User = Depends(get_verified_user),
+    current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
     """Verify bank account details"""
@@ -104,7 +104,7 @@ def verify_bank(
 
 @router.get("/status", response_model=UserDetailResponse)
 def get_verification_status(
-    current_user: User = Depends(get_verified_user),
+    current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
     """Get current verification status of the user"""
@@ -139,7 +139,7 @@ def get_verification_status(
 
 @router.get("/panel-access")
 def check_panel_access(
-    current_user: User = Depends(get_verified_user),
+    current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
     """Check if user has completed all verifications"""

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.utils.helpers import generate_otp, capitalize_first_name
-from app.models.user import User  # adjust path
+from app.model.ip import ip  # adjust path
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -23,7 +23,7 @@ class OTPService:
 
         expiry_time = datetime.utcnow() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
 
-        user = db.query(User).filter(User.phone_number == phone_number).first()
+        user = db.query(ip).filter(ip.phone_number == phone_number).first()
 
         if not user:
             raise Exception("User not found")
@@ -38,7 +38,7 @@ class OTPService:
     @staticmethod
     def verify_otp(db: Session, phone_number: str, otp: str) -> bool:
         """Check OTP stored in DB"""
-        user = db.query(User).filter(User.phone_number == phone_number).first()
+        user = db.query(ip).filter(ip.phone_number == phone_number).first()
 
         if not user or not user.otp:
             return False
@@ -98,7 +98,7 @@ class OTPService:
             return False
 
     @staticmethod
-    def send_otp(db: Session, phone_number: str, user_name: str = "User") -> dict:
+    def send_otp(db: Session, phone_number: str, user_name: str = "ip") -> dict:
         otp = OTPService.generate_and_store_otp(db, phone_number)
         sms_sent = OTPService.send_sms(phone_number, user_name, otp)
 

@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.user import User
+from app.model.ip import ip
 from app.utils.helpers import verify_token
 
 security = HTTPBearer()
@@ -11,7 +11,7 @@ security = HTTPBearer()
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db)
-) -> User:
+) -> ip:
     """Dependency to get current authenticated user"""
     token = credentials.credentials
     
@@ -29,7 +29,7 @@ def get_current_user(
             detail="Invalid token payload"
         )
     
-    user = db.query(User).filter(User.id == id).first()
+    user = db.query(ip).filter(ip.id == id).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -39,7 +39,7 @@ def get_current_user(
     return user
 
 
-def get_verified_user(current_user: User = Depends(get_current_user)) -> User:
+def get_verified_user(current_user: ip = Depends(get_current_user)) -> ip:
     """Dependency to ensure user has verified their phone"""
     if not current_user.is_verified:
         raise HTTPException(

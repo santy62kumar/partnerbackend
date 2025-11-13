@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.user import User
-from app.models.job import Job
+from app.model.ip import ip
+from app.model.job import Job
 from app.api.deps import get_verified_user
 from app.services.s3_service import upload_file_to_s3
 
@@ -12,10 +12,11 @@ router = APIRouter(prefix="/dashboard/jobs", tags=["Dashboard"])
 # ✅ Get all jobs (only if verified)
 @router.get("")
 def get_all_jobs(
-    current_user: User = Depends(get_verified_user),
+    current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
-    jobs = db.query(Job).all()
+    # jobs = db.query(Job).all()
+    jobs = db.query(Job).filter(Job.assigned_ip_id == current_user.id).all()
     print("Jobs fetched:", jobs)
 
     return {
@@ -29,7 +30,7 @@ def get_all_jobs(
 @router.get("/{job_id}")
 def get_single_job(
     job_id: int,
-    current_user: User = Depends(get_verified_user),
+    current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -52,7 +53,7 @@ def get_single_job(
 async def upload_progress_update(
     job_id: int,
     file: UploadFile = File(...),
-    current_user: User = Depends(get_verified_user),
+    current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -84,7 +85,7 @@ async def upload_progress_update(
 @router.get("/{job_id}/completed")
 def complete_job(
     job_id: int,
-    current_user: User = Depends(get_verified_user),
+    current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
     job = db.query(Job).filter(Job.id == job_id).first()

@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import datetime
 from app.database import get_db
-from app.models.user import User
+from app.model.ip import ip
 
-from app.schemas.user import (
+from app.schemas.ip import (
     UserRegistration, 
     LoginRequest, 
     OTPVerification,  
@@ -23,7 +23,7 @@ def register_user(user_data: UserRegistration, db: Session = Depends(get_db)):
     """Register a new user"""
     
     # Check if user already exists
-    existing_user = db.query(User).filter(User.phone_number == user_data.phone_number).first()
+    existing_user = db.query(ip).filter(ip.phone_number == user_data.phone_number).first()
     print("user details", existing_user)
     if existing_user:
         raise HTTPException(
@@ -31,8 +31,8 @@ def register_user(user_data: UserRegistration, db: Session = Depends(get_db)):
             detail="User with this phone_number number already exists"
         )
     
-    # Create new user
-    new_user = User(
+    # Create new ip
+    new_user = ip(
         phone_number=user_data.phone_number,
         first_name=user_data.first_name,
         last_name=user_data.last_name,
@@ -58,7 +58,7 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
         phone_number = '91' + phone_number
     
     # Check if user exists
-    user = db.query(User).filter(User.phone_number == phone_number).first()
+    user = db.query(ip).filter(ip.phone_number == phone_number).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -94,7 +94,7 @@ def verify_otp(otp_data: OTPVerification, db: Session = Depends(get_db)):
         phone_number = '91' + phone_number
     
     # Check if user exists
-    user = db.query(User).filter(User.phone_number == phone_number).first()
+    user = db.query(ip).filter(ip.phone_number == phone_number).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -136,7 +136,7 @@ def resend_otp(login_data: LoginRequest, db: Session = Depends(get_db)):
         phone_number = '91' + phone_number
     
     # Check if user exists
-    user = db.query(User).filter(User.phone_number == phone_number).first()
+    user = db.query(ip).filter(ip.phone_number == phone_number).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -161,7 +161,7 @@ def resend_otp(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/logout")
 def logout(
-    current_user: User = Depends(get_current_user),
+    current_user: ip = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     
