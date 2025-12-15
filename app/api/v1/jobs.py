@@ -13,7 +13,7 @@ router = APIRouter(prefix="/dashboard/jobs", tags=["Dashboard"])
 
 
 # ✅ Get all jobs (only if verified)
-@router.get("")
+@router.get("/")
 def get_all_jobs(
     current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
