@@ -36,9 +36,7 @@ class Settings(BaseSettings):
     
     # Attestr API
     ATTESTR_API_KEY: str
-    
-    
-    
+
     # OTP Settings
     OTP_EXPIRY_MINUTES: int = 10
     OTP_LENGTH: int = 6

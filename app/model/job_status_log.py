@@ -11,3 +11,4 @@ class JobStatusLog(Base):
     status: Mapped[str] = mapped_column(String, nullable=False)
     timestamp: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     notes: Mapped[str] = mapped_column(String, nullable=True)
+    

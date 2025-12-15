@@ -23,6 +23,7 @@ class ip(Base):
     is_id_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     otp: Mapped[str | None] = mapped_column(String, nullable=True)
     otp_expiry: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    doc_link: Mapped[str] = mapped_column(String, nullable=True)
 
     # Verification details
     pan_number: Mapped[str | None] = mapped_column(String, nullable=True)

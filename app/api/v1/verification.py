@@ -112,30 +112,6 @@ def get_verification_status(
     return current_user
 
 
-# @router.get("/panel-access")
-# def check_panel_access(
-#     current_user: User = Depends(get_verified_user),
-#     db: Session = Depends(get_db)
-# ):
-#     """Check if user has completed all verifications"""
-    
-#     all_verified = (
-#         current_user.is_verified and
-#         current_user.is_pan_verified and
-#         current_user.is_bank_details_verified
-#     )
-    
-#     return {
-#         "has_full_access": all_verified,
-#         "verification_status": {
-#             "phone_verified": current_user.is_verified,
-#             "pan_verified": current_user.is_pan_verified,
-#             "bank_verified": current_user.is_bank_details_verified,
-#             "id_verified": current_user.is_id_verified
-#         },
-#         "message": "All verifications complete" if all_verified else "Please complete pending verifications"
-#     }
-
 
 @router.get("/panel-access")
 def check_panel_access(
@@ -150,15 +126,11 @@ def check_panel_access(
         current_user.is_bank_details_verified
     )
 
-    # ✅ If verified, fetch job data
+    
     if all_verified:
-        # jobs = db.query(Job).filter(Job.assigned_ip_id == current_user.id).all()
+        
         jobs = db.query(Job).all()
-        # print("Current user ID:", current_user.id)
-        # print("assigned ip for the  jobs:", [job.assigned_ip_id for job in jobs])
-        # print("Jobs assigned to user:", jobs)
 
-        # Convert SQLAlchemy objects → dict
         job_data = [
             {
                 "id": job.id,

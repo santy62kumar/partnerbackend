@@ -64,9 +64,7 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found. Please register first."
         )
-    
-    # Generate and send OTP
-    # Extract first name from phone number or use default
+
     first_name = user.first_name.split()[0] if user.phone_number else "User"
 
     # otp_result = OTPService.send_otp(phone_number, first_name)

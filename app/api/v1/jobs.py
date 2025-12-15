@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends,Form, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.model.ip import ip
 from app.model.job import Job
 from app.api.deps import get_verified_user
 from app.services.s3_service import upload_file_to_s3
+from app.model.job_status_log import JobStatusLog
+from app.model.job_media import JobMedia
+from typing import List
 
 router = APIRouter(prefix="/dashboard/jobs", tags=["Dashboard"])
 
@@ -48,23 +51,20 @@ def get_single_job(
 
 
 
-
 @router.post("/{job_id}/upload")
-async def upload_progress_update(
+async def upload_multiple_files(
     job_id: int,
     file: UploadFile = File(...),
+    comment: str = Form(None),
     current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
+    # 1️⃣ Validate job
     job = db.query(Job).filter(Job.id == job_id).first()
-
     if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
-        )
+        raise HTTPException(status_code=404, detail="Job not found")
 
-    # Read file content
+    # 2️⃣ Upload file to S3
     file_content = await file.read()
     file_url = upload_file_to_s3(
         file_content=file_content,
@@ -72,35 +72,66 @@ async def upload_progress_update(
         content_type=file.content_type
     )
 
-    # Save the uploaded file link to DB later (if you have a table)
-    # job.progress_images.append(file_url) — later phase
+    # 3️⃣ Create a new JobMedia entry
+    new_media = JobMedia(
+        job_id=job_id,
+        status=job.status,       # store the current job status
+        doc_link=file_url,
+        comment=comment
+    )
 
+    # 4️⃣ Add and commit to DB
+    db.add(new_media)
+    db.commit()
+    db.refresh(new_media)
+
+    # 5️⃣ Return response
     return {
-        "message": "File uploaded successfully",
-        "file_url": file_url
+        "message": "File uploaded and saved successfully",
+        "job_id": job_id,
+        "doc_link": new_media.doc_link,
+        "comment": new_media.comment
     }
 
-
-# ✅ Complete job
-@router.get("/{job_id}/completed")
-def complete_job(
+@router.get("/{job_id}/progress")
+async def get_job_progress(
     job_id: int,
     current_user: ip = Depends(get_verified_user),
     db: Session = Depends(get_db)
 ):
+    # 1️⃣ Validate if job exists
     job = db.query(Job).filter(Job.id == job_id).first()
-
     if not job:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found"
-        )
+        raise HTTPException(status_code=404, detail="Job not found")
 
-    job.status = "completed"
-    db.commit()
-    db.refresh(job)
+    # 2️⃣ Fetch all media entries for this job (ordered by upload time)
+    media_records = (
+        db.query(JobMedia)
+        .filter(JobMedia.job_id == job_id)
+        .order_by(JobMedia.uploaded_at.desc())
+        .all()
+    )
 
+    # 3️⃣ Transform the result for clean JSON response
+    result = [
+        {
+            "id": media.id,
+            "job_id": media.job_id,
+            "status": media.status,
+            "doc_link": media.doc_link,
+            "comment": media.comment,
+            "uploaded_at": media.uploaded_at,
+        }
+        for media in media_records
+    ]
+
+    # 4️⃣ Return the structured response
     return {
-        "message": "Job marked as completed",
-        "job": job
+        "job_id": job_id,
+        "job_status": job.status,
+        "total_uploads": len(result),
+        "uploads": result,
     }
+
+
+
