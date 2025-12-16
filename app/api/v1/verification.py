@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status, File
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.model.ip import ip
 from app.model.job import Job
 
+from app.model.user_document import UserDocument
 from app.schemas.ip import (
     PANVerification, 
     BankVerification,
@@ -12,6 +13,7 @@ from app.schemas.ip import (
 from app.services.pan_service import PANService
 from app.services.bank_service import BankService
 from app.api.deps import get_verified_user
+from app.services.s3_service import upload_file_to_s3
 
 router = APIRouter(prefix="/verification", tags=["Verification"])
 
@@ -166,4 +168,39 @@ def check_panel_access(
             "id_verified": current_user.is_id_verified
         },
         "message": "Please complete pending verifications"
+    }
+
+
+@router.post("/verify_document")
+async def upload_user_document(
+    file: UploadFile = File(...),
+    current_user: ip = Depends(get_verified_user),
+    db: Session = Depends(get_db)
+):
+    # 1️⃣ Upload file to S3
+    file_content = await file.read()
+    file_url = upload_file_to_s3(
+        file_content=file_content,
+        filename=file.filename,
+        content_type=file.content_type
+    )
+
+    # 2️⃣ Create a new UserDocument entry
+    new_document = UserDocument(
+        status="pending",  # default status for newly uploaded documents
+        doc_link=file_url
+    )
+
+    # 3️⃣ Add and commit to DB
+    db.add(new_document)
+    db.commit()
+    db.refresh(new_document)
+
+    # 4️⃣ Return response
+    return {
+        "message": "Document uploaded successfully",
+        "document_id": new_document.id,
+        "doc_link": new_document.doc_link,
+        "status": new_document.status,
+        "uploaded_at": new_document.uploaded_at
     }
