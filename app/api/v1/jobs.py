@@ -21,11 +21,33 @@ def get_all_jobs(
     # jobs = db.query(Job).all()
     jobs = db.query(Job).filter(Job.assigned_ip_id == current_user.id).all()
     print("Jobs fetched:", jobs)
+    
+    jobs_data = []
+    for job in jobs:
+        jobs_data.append({
+            "id": job.id,
+            "name": job.name,
+            "customer_name": job.customer_name,
+            "address": job.address,
+            "city": job.city,
+            "status": job.status,
+            "pincode": job.pincode,
+            "assigned_ip_id": job.assigned_ip_id,
+            "type": job.type,
+            "rate": float(job.rate),
+            "size": job.size,
+            "delivery_date": job.delivery_date,
+            "checklist_link": job.checklist_link,
+            "google_map_link": job.google_map_link,
+
+            # ⭐ checklist IDs from association table
+            "checklist_ids": [c.id for c in job.checklists]
+        })
 
     return {
         "message": "Jobs fetched successfully",
-        "total": len(jobs),
-        "jobs": jobs
+        "total": len(jobs_data),
+        "jobs": jobs_data
     } 
 
 
@@ -44,9 +66,29 @@ def get_single_job(
             detail="Job not found"
         )
 
+    job_data = {
+        "id": job.id,
+        "name": job.name,
+        "customer_name": job.customer_name,
+        "address": job.address,
+        "city": job.city,
+        "status": job.status,
+        "pincode": job.pincode,
+        "assigned_ip_id": job.assigned_ip_id,
+        "type": job.type,
+        "rate": float(job.rate),
+        "size": job.size,
+        "delivery_date": job.delivery_date,
+        "checklist_link": job.checklist_link,
+        "google_map_link": job.google_map_link,
+
+        # ⭐ from association table
+        "checklist_ids": [c.id for c in job.checklists]
+    }
+
     return {
-        "message": "Job retrieved successfully",
-        "job": job
+        "message": "Job fetched successfully",
+        "job": job_data
     }
 
 

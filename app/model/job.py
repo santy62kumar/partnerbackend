@@ -1,8 +1,14 @@
-from sqlalchemy import Column, Integer, String, Boolean, Numeric, Date
-from sqlalchemy.orm import  Mapped, mapped_column
+from sqlalchemy import Column, Integer, String, Boolean, Numeric, Date, ForeignKey
+from sqlalchemy.orm import  Mapped, mapped_column, relationship
 from app.database import Base
 from decimal import Decimal
 from datetime import date
+from app.model.associations import job_checklist_link
+
+
+
+
+# Define the Job-Checklist Link table first
 
 
 class Job(Base):
@@ -23,11 +29,18 @@ class Job(Base):
     checklist_link: Mapped[str] = mapped_column(String, nullable=True)
     google_map_link: Mapped[str] = mapped_column(String, nullable=True) 
     
+    checklists: Mapped[list["Checklist"]] = relationship(
+            "Checklist",
+            secondary=job_checklist_link,
+            back_populates="jobs",
+            lazy="select"
+        )
+   
     
     def __repr__(self):
         return f"<Job {self.name}>"
     
-                                 # JSON string for checklist items
+                            
 
    
     
