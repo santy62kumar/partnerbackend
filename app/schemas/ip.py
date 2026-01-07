@@ -81,6 +81,9 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
 
+class AuthSuccessResponse(BaseModel):
+    message: str
+    user: UserResponse
 
 class ipuser(BaseModel):
     first_name:str 

@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Request, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -9,11 +9,16 @@ security = HTTPBearer()
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
     db: Session = Depends(get_db)
 ) -> ip:
-    """Dependency to get current authenticated user"""
-    token = credentials.credentials
+    token = request.cookies.get("auth-token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
     
     payload = verify_token(token)
     if payload is None:
@@ -40,10 +45,9 @@ def get_current_user(
 
 
 def get_verified_user(current_user: ip = Depends(get_current_user)) -> ip:
-    """Dependency to ensure user has verified their phone"""
     if not current_user.is_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Phone number not verified. Please verify your OTP first."
+            detail="Phone number not verified"
         )
     return current_user

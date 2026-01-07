@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
+from fastapi.responses import JSONResponse
+from fastapi import Response
 from datetime import datetime
 from app.database import get_db
 from app.model.ip import ip
 
 from app.schemas.ip import (
+    AuthSuccessResponse,
     UserRegistration, 
     LoginRequest, 
     OTPVerification,  
@@ -13,13 +16,13 @@ from app.schemas.ip import (
 )
 from app.services.otp_service import OTPService
 from app.utils.helpers import create_access_token
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_verified_user
+
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register_user(user_data: UserRegistration, db: Session = Depends(get_db)):
+def register_user(user_data: UserRegistration, response: Response,db: Session = Depends(get_db)):
     """Register a new user"""
     
     # Check if user already exists
@@ -82,8 +85,8 @@ def login(login_data: LoginRequest, db: Session = Depends(get_db)):
     }
 
 
-@router.post("/verify-otp", response_model=TokenResponse)
-def verify_otp(otp_data: OTPVerification, db: Session = Depends(get_db)):
+@router.post("/verify-otp", response_model=AuthSuccessResponse)
+def verify_otp(otp_data: OTPVerification,  response: Response, db: Session = Depends(get_db)):
     """Verify OTP and authenticate user"""
     
     # Normalize phone_number number
@@ -116,16 +119,26 @@ def verify_otp(otp_data: OTPVerification, db: Session = Depends(get_db)):
     
     # Generate access token
     access_token = create_access_token(data={"sub": str(user.id)})
+
+    response.set_cookie(
+        "auth-token", 
+        access_token, 
+        httponly=True,  # JavaScript can't access this cookie
+        secure=False,
+        # secure=True,
+        samesite="Lax", # Only send cookie over HTTPS (set to False for local development without HTTPS)
+        max_age=3600,  # Cookie expiration time (1 hour)
+        # samesite="Strict"  # Helps prevent CSRF
+    )
     
     return {
-        "access_token": access_token,
-        "token_type": "bearer",
+        "message": "OTP verified and user authenticated",
         "user": user
     }
 
 
 @router.post("/resend-otp")
-def resend_otp(login_data: LoginRequest, db: Session = Depends(get_db)):
+def resend_otp(login_data: LoginRequest, response: Response, db: Session = Depends(get_db)):
     """Resend OTP to user"""
     
     # Normalize phone_number number
@@ -159,16 +172,25 @@ def resend_otp(login_data: LoginRequest, db: Session = Depends(get_db)):
 
 @router.post("/logout")
 def logout(
+    response: Response,
     current_user: ip = Depends(get_current_user),
     db: Session = Depends(get_db)
+    
 ):
     
     # Optionally log the logout time for audit purposes
     #current_user.last_logout_at = datetime.utcnow()
     current_user.is_verified = False
     db.commit()
-    
+
+    response.delete_cookie("auth-token")  # Clear the auth token cookie
+
     return {
         "message": f"User with phone_number {current_user.phone_number} logged out successfully.",
-        "logout_time": current_user.last_logout_at
+        # "logout_time": current_user.last_logout_at
     }
+
+
+@router.get("/me")
+def me(current_user: ip = Depends(get_verified_user)):
+    return current_user
