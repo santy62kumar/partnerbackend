@@ -5,10 +5,14 @@ Updated to import association table from separate file
 """
 
 from sqlalchemy import Integer, String, Boolean, DateTime, ForeignKey, Text
+from sqlalchemy import func
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 from app.database import Base
 from app.model.associations import job_checklist_link  # ✅ Import the table
+# from sqlalchemy import Integer
+
 
 
 class Checklist(Base):

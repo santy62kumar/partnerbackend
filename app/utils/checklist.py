@@ -4,6 +4,7 @@ Handles complex queries and business logic
 """
 
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import Integer
 from sqlalchemy import and_, func
 from fastapi import HTTPException, status
 from typing import List, Dict, Tuple, Optional
@@ -183,28 +184,55 @@ def calculate_job_checklists_stats(db: Session, job_id: int) -> Dict[str, any]:
         Dictionary with aggregate statistics
     """
     # Query to get aggregated stats
+    # stats = (
+    #     db.query(
+    #         func.count(ChecklistItem.id).label('total_items'),
+    #         func.sum(func.cast(ChecklistItem.checked, Integer)).label('checked_items'),
+    #         func.sum(
+    #             func.case(
+    #                 (ChecklistItem.status == 'pending', 1),
+    #                 else_=0
+    #             )
+    #         ).label('pending_items'),
+    #         func.sum(
+    #             func.case(
+    #                 (ChecklistItem.status == 'approved', 1),
+    #                 else_=0
+    #             )
+    #         ).label('approved_items')
+    #     )
+    #     .join(Checklist, ChecklistItem.checklist_id == Checklist.id)
+    #     .join(Checklist.jobs)
+    #     .filter(Job.id == job_id)
+    #     .first()
+    # )
+
+
     stats = (
-        db.query(
-            func.count(ChecklistItem.id).label('total_items'),
-            func.sum(func.cast(ChecklistItem.checked, Integer)).label('checked_items'),
-            func.sum(
-                func.case(
-                    (ChecklistItem.status == 'pending', 1),
-                    else_=0
-                )
-            ).label('pending_items'),
-            func.sum(
-                func.case(
-                    (ChecklistItem.status == 'approved', 1),
-                    else_=0
-                )
-            ).label('approved_items')
-        )
-        .join(Checklist, ChecklistItem.checklist_id == Checklist.id)
-        .join(Checklist.jobs)
-        .filter(Job.id == job_id)
-        .first()
+    db.query(
+        func.count(ChecklistItem.id).label('total_items'),
+        func.sum(func.cast(ChecklistItem.checked, Integer)).label('checked_items'),
+        func.sum(
+            func.case(
+                [(ChecklistItem.status == 'pending', 1)],  # Use list syntax for conditionals
+                else_=0
+            )
+        ).label('pending_items'),
+        func.sum(
+            func.case(
+                [(ChecklistItem.status == 'approved', 1)],  # Use list syntax for conditionals
+                else_=0
+            )
+        ).label('approved_items')
     )
+    .join(Checklist, ChecklistItem.checklist_id == Checklist.id)
+    .join(Checklist.jobs)
+    .filter(Job.id == job_id)
+    .first()
+    )
+
+    
+
     
     total = stats.total_items or 0
     checked = stats.checked_items or 0
