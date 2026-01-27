@@ -3,7 +3,7 @@ from sqlalchemy.orm import  Mapped, mapped_column, relationship
 from app.database import Base
 from decimal import Decimal
 from datetime import date
-from app.model.associations import job_checklist_link
+from app.model.associations import JobChecklist
 
 
 
@@ -28,14 +28,20 @@ class Job(Base):
     delivery_date: Mapped[date] = mapped_column(Date)
     checklist_link: Mapped[str] = mapped_column(String, nullable=True)
     google_map_link: Mapped[str] = mapped_column(String, nullable=True) 
+
+    job_checklists: Mapped["JobChecklist"] = relationship(
+        "JobChecklist", back_populates="job"
+    )
     
     checklists: Mapped[list["Checklist"]] = relationship(
-            "Checklist",
-            secondary=job_checklist_link,
-            back_populates="jobs",
-            lazy="select"
-        )
-   
+        "Checklist",
+        secondary=JobChecklist.__table__,  # Use JobChecklist.__table__ instead of the class itself
+        back_populates="jobs",
+        lazy="select"
+    )
+    # job_checklists: Mapped["JobChecklist"] = relationship(
+    #         "JobChecklist", back_populates="job"
+    #     )
     
     def __repr__(self):
         return f"<Job {self.name}>"

@@ -83,7 +83,14 @@ def get_single_job(
         "google_map_link": job.google_map_link,
 
         # ⭐ from association table
-        "checklist_ids": [c.id for c in job.checklists]
+        # "checklist_ids": [c.id for c in job.checklists]
+        "checklists": [
+        {
+            "id": c.id,
+            "name": c.name
+        }
+        for c in job.checklists
+        ]
     }
 
     return {

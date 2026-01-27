@@ -3,7 +3,7 @@
 import os
 import requests
 import urllib.parse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
@@ -44,7 +44,7 @@ class OTPService:
             return False
         
         # Check expiry
-        if user.otp_expiry < datetime.utcnow():
+        if user.otp_expiry < datetime.now(timezone.utc):
             return False
 
         # Compare OTP directly

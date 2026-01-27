@@ -10,7 +10,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 from app.database import Base
-from app.model.associations import job_checklist_link  # ✅ Import the table
+from app.model.associations import JobChecklist  # ✅ Import the table
 # from sqlalchemy import Integer
 
 
@@ -25,14 +25,33 @@ class Checklist(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relationships
-    jobs: Mapped[list["Job"]] = relationship(
-        "Job",
-        secondary=job_checklist_link,  # ✅ Use the imported table object
-        back_populates="checklists",
-        lazy="select"
-    )
     
+    # job_checklists: Mapped["JobChecklist"] = relationship(
+    #     "JobChecklist", back_populates="checklist"
+    # )
+    job_checklists: Mapped[list["JobChecklist"]] = relationship(
+    "JobChecklist",
+    back_populates="checklist",
+    cascade="all, delete-orphan"
+)
+
+
+    # Many-to-many relationship with Job via JobChecklist
+    # jobs: Mapped[list["Job"]] = relationship(
+    #     "Job",
+    #     secondary=JobChecklist.__table__,  # Use JobChecklist.__table__ instead of the class itself
+    #     back_populates="checklists",
+    #     lazy="select"
+    # )
+
+    jobs: Mapped[list["Job"]] = relationship(
+    "Job",
+    secondary=JobChecklist.__table__,
+    back_populates="checklists",
+    lazy="select",
+    viewonly=True   # 👈 IMPORTANT
+)
+
     items: Mapped[list["ChecklistItem"]] = relationship(
         "ChecklistItem",
         back_populates="checklist",
