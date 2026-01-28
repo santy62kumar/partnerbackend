@@ -83,6 +83,7 @@ class TokenResponse(BaseModel):
 
 class AuthSuccessResponse(BaseModel):
     message: str
+    token: str
     user: UserResponse
 
 class ipuser(BaseModel):
