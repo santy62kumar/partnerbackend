@@ -126,13 +126,14 @@ def verify_otp(otp_data: OTPVerification,  response: Response, db: Session = Dep
         httponly=True,  # JavaScript can't access this cookie
         secure=False,
         # secure=True,
-        samesite="Lax", # Only send cookie over HTTPS (set to False for local development without HTTPS)
+        samesite="none", # Only send cookie over HTTPS (set to False for local development without HTTPS)
         max_age=3600,  # Cookie expiration time (1 hour)
         # samesite="Strict"  # Helps prevent CSRF
     )
     
     return {
         "message": "OTP verified and user authenticated",
+        "token": access_token,
         "user": user
     }
 

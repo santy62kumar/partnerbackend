@@ -1,4 +1,5 @@
-from fastapi import Depends, Request, HTTPException, status, Cookie
+from fastapi import Depends, Request, HTTPException, status, Cookie, Header
+from typing import Optional
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -8,18 +9,68 @@ from app.utils.helpers import verify_token
 security = HTTPBearer()
 
 
+# def get_current_user(
+#     request: Request,
+#     db: Session = Depends(get_db)
+# ) -> ip:
+#     token = request.cookies.get("auth-token")
+
+#     if not token:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Not authenticated"
+#         )
+    
+#     payload = verify_token(token)
+#     if payload is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Invalid or expired token"
+#         )
+    
+#     id = payload.get("sub")
+#     if id is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Invalid token payload"
+#         )
+    
+#     user = db.query(ip).filter(ip.id == id).first()
+#     if user is None:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="User not found"
+#         )
+    
+#     return user
+
+
 def get_current_user(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    authorization: Optional[str] = Header(None)  # ✅ Add this
 ) -> ip:
-    token = request.cookies.get("auth-token")
-
+    token = None
+    
+    # ✅ Try to get token from Authorization header first (Bearer token)
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+        print("🔑 Token from Authorization header", token)
+    
+    # ✅ Fallback to cookie if no Authorization header
+    if not token:
+        token = request.cookies.get("auth-token")
+        if token:
+            print("🍪 Token from cookie")
+    
+    # ❌ No token found in either place
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated"
         )
     
+    # Verify token
     payload = verify_token(token)
     if payload is None:
         raise HTTPException(
@@ -34,6 +85,7 @@ def get_current_user(
             detail="Invalid token payload"
         )
     
+    # Get user from database
     user = db.query(ip).filter(ip.id == id).first()
     if user is None:
         raise HTTPException(
@@ -42,9 +94,6 @@ def get_current_user(
         )
     
     return user
-
-
-
 
 # def get_current_user(
 #     token: str | None = Cookie(None, alias="auth-token"),
