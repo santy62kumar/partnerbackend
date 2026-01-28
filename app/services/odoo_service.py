@@ -188,8 +188,8 @@ class OdooService:
     """Service class for interacting with Odoo XML-RPC API"""
     
     # Odoo connection settings
-    URL = 'https://modula11.odoo.com'
-    DB = 'modula11'
+    URL = 'https://modula.odoo.com'
+    DB = 'modula'
     USERNAME = 'installation@modula.in'
     PASSWORD = 'Modula@2026'
     

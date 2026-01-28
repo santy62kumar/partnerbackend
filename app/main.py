@@ -17,8 +17,8 @@ from app.routes.analytics import router as analytics_router
 
 
 
-url = 'https://modula11.odoo.com'  # Replace with your Odoo instance URL
-db = 'modula11'  # Odoo database name
+url = 'https://modula.odoo.com'  # Replace with your Odoo instance URL
+db = 'modula'  # Odoo database name
 username = 'installation@modula.in'  # Odoo login username
 password = 'Modula@2026'  # Odoo login password
 
@@ -40,9 +40,10 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",   # React dev
-        # add prod domain later
-        # "https://partner.modula.in"
+        "https://partner.modula.in",
+        "http://localhost:3000",   # React dev server (local)
+        "https://partnerfrontend.vercel.app",  # Previous production frontend URL
+          # Added subdomain
     ],  # Update this in production
     allow_credentials=True,
     allow_methods=["*"],
