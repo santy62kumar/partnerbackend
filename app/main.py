@@ -17,10 +17,10 @@ from app.routes.analytics import router as analytics_router
 
 
 
-url = 'https://modula.odoo.com'  # Replace with your Odoo instance URL
-db = 'modula'  # Odoo database name
-username = 'admin@ayena.in'  # Odoo login username
-password = '1'  # Odoo login password
+url = 'https://modula11.odoo.com'  # Replace with your Odoo instance URL
+db = 'modula11'  # Odoo database name
+username = 'installation@modula.in'  # Odoo login username
+password = 'Modula@2026'  # Odoo login password
 
 # Setting up the connection to Odoo
 common = xmlrpc.client.ServerProxy(f'{url}/xmlrpc/2/common')
@@ -51,10 +51,10 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix="/api/v1")
-app.include_router(verification.router, prefix="/api/v1/auth")
-app.include_router(jobs.router, prefix="/api/v1/auth")
-app.include_router(checklist.router, prefix="/api/v1/auth")
-app.include_router(odooBomApi.router, prefix="/api/v1/auth")  
+app.include_router(verification.router, prefix="/api/v1")
+app.include_router(jobs.router, prefix="/api/v1")
+app.include_router(checklist.router, prefix="/api/v1")
+app.include_router(odooBomApi.router, prefix="/api/v1")  
 app.include_router(auth_router)
 app.include_router(approval_router)
 app.include_router(job_router)

@@ -39,6 +39,7 @@ def get_all_jobs(
             "delivery_date": job.delivery_date,
             "checklist_link": job.checklist_link,
             "google_map_link": job.google_map_link,
+            "start_date": job.start_date,
 
             # ⭐ checklist IDs from association table
             "checklist_ids": [c.id for c in job.checklists]
@@ -81,6 +82,7 @@ def get_single_job(
         "delivery_date": job.delivery_date,
         "checklist_link": job.checklist_link,
         "google_map_link": job.google_map_link,
+        "start_date": job.start_date,
 
         # ⭐ from association table
         # "checklist_ids": [c.id for c in job.checklists]

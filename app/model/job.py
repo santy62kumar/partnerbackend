@@ -27,7 +27,8 @@ class Job(Base):
     size: Mapped[int] = mapped_column(Integer, nullable=True)
     delivery_date: Mapped[date] = mapped_column(Date)
     checklist_link: Mapped[str] = mapped_column(String, nullable=True)
-    google_map_link: Mapped[str] = mapped_column(String, nullable=True) 
+    google_map_link: Mapped[str] = mapped_column(String, nullable=True)
+    start_date: Mapped[date] = mapped_column(Date, nullable=True)
 
     job_checklists: Mapped["JobChecklist"] = relationship(
         "JobChecklist", back_populates="job"

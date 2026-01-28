@@ -19,7 +19,7 @@ from app.utils.helpers import create_access_token
 from app.api.deps import get_current_user, get_verified_user
 
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(prefix="", tags=["Authentication"])
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register_user(user_data: UserRegistration, response: Response,db: Session = Depends(get_db)):

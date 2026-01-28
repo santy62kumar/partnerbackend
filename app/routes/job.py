@@ -56,3 +56,4 @@ def finish_existing_job(job_id: int, job_finish: JobFinish = JobFinish(), db: Se
 def get_job_history(job_id: int, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     """Get complete status change history for a job, including all pauses and resumes."""
     return get_job_status_history(db, job_id)
+

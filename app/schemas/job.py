@@ -62,6 +62,7 @@ class JobResponse(BaseModel):
     delivery_date: Optional[date] = None
     checklist_link: Optional[str] = None
     google_map_link: Optional[str] = None
+    start_date: Optional[date] = None
     status: str = 'created'
     
     class Config:
