@@ -43,6 +43,13 @@ class Job(Base):
     # job_checklists: Mapped["JobChecklist"] = relationship(
     #         "JobChecklist", back_populates="job"
     #     )
+
+
+    job_checklist_item_statuses: Mapped[list["JobChecklistItemStatus"]] = relationship(
+        "JobChecklistItemStatus",
+        back_populates="job",
+        cascade="all, delete-orphan"
+    )
     
     def __repr__(self):
         return f"<Job {self.name}>"

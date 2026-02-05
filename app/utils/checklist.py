@@ -11,6 +11,7 @@ from typing import List, Dict, Tuple, Optional
 
 from app.model.job import Job
 from app.model.checklist import Checklist, ChecklistItem
+from app.model.checklist import JobChecklistItemStatus
 from app.model.ip import ip
 
 
@@ -52,20 +53,7 @@ def verify_checklist_access(
     job_id: int, 
     db: Session
 ) -> Checklist:
-    """
-    Verify that the checklist exists and belongs to the job
     
-    Args:
-        checklist_id: ID of the checklist
-        job_id: ID of the job
-        db: Database session
-    
-    Returns:
-        Checklist object if found and belongs to job
-    
-    Raises:
-        HTTPException: If checklist not found or doesn't belong to job
-    """
     checklist = (
         db.query(Checklist)
         .join(Checklist.jobs)
@@ -131,124 +119,92 @@ def verify_checklist_items(
 
 # ==================== Statistics Functions ====================
 
-def calculate_checklist_stats(items: List[ChecklistItem]) -> Dict[str, any]:
+
+
+def get_job_checklist_items_with_status(
+    job_id: int,
+    checklist_id: int,
+    db: Session
+):
     """
-    Calculate statistics for checklist items
-    
-    Args:
-        items: List of checklist items
-    
-    Returns:
-        Dictionary with statistics:
-        - total_items: Total number of items
-        - checked_count: Number of checked items
-        - pending_count: Number of pending items
-        - approved_count: Number of approved items
-        - completion_percentage: Percentage of checked items
+    Get checklist items and merge with their job-specific status
+    Also calculate statistics in the same pass
     """
-    total = len(items)
+    # Get checklist items
+    items = (
+        db.query(ChecklistItem)
+        .filter(ChecklistItem.checklist_id == checklist_id)
+        .order_by(ChecklistItem.position)
+        .all()
+    )
     
-    if total == 0:
-        return {
-            "total_items": 0,
-            "checked_count": 0,
-            "pending_count": 0,
-            "approved_count": 0,
-            "completion_percentage": 0.0
+    # Get job statuses for these items
+    item_ids = [item.id for item in items]
+    statuses = (
+        db.query(JobChecklistItemStatus)
+        .filter(
+            JobChecklistItemStatus.job_id == job_id,
+            JobChecklistItemStatus.checklist_item_id.in_(item_ids)
+        )
+        .all()
+    )
+    
+    # Create status map
+    status_map = {status.checklist_item_id: status for status in statuses}
+    
+    # Initialize counters
+    total_items = len(items)
+    checked_count = 0
+    approved_count = 0
+    pending_count = 0
+    
+    # Merge items with status AND calculate stats
+    items_with_status = []
+    for item in items:
+        status = status_map.get(item.id)
+        
+        # Calculate stats
+        if status:
+            if status.checked:
+                checked_count += 1
+            if status.is_approved:
+                approved_count += 1
+            if status.checked and not status.is_approved:
+                pending_count += 1
+        
+        # Build item with status
+        items_with_status.append({
+            "id": item.id,
+            "text": item.text,
+            "position": item.position,
+            "created_at": item.created_at,
+            # Add status fields from JobChecklistItemStatus table
+            "status_id": status.id if status else None,
+            "checked": status.checked if status else False,
+            "is_approved": status.is_approved if status else False,
+            "comment": status.comment if status else None,
+            "admin_comment": status.admin_comment if status else None,
+            "document_link": status.document_link if status else None,
+        })
+    
+    # Calculate completion percentage
+    completion_percentage = round((checked_count / total_items * 100), 2) if total_items > 0 else 0.0
+    
+    # Return both items and stats
+    return {
+        "items": items_with_status,
+        "stats": {
+            "total_items": total_items,
+            "checked_count": checked_count,
+            "pending_count": pending_count,
+            "approved_count": approved_count,
+            "completion_percentage": completion_percentage
         }
-    
-    checked = sum(1 for item in items if item.checked)
-    pending = sum(1 for item in items if item.status == "pending")
-    approved = sum(1 for item in items if item.status == "approved")
-    
-    completion_percentage = round((checked / total) * 100, 2)
-    
-    return {
-        "total_items": total,
-        "checked_count": checked,
-        "pending_count": pending,
-        "approved_count": approved,
-        "completion_percentage": completion_percentage
     }
 
 
-def calculate_job_checklists_stats(db: Session, job_id: int) -> Dict[str, any]:
-    """
-    Calculate aggregate statistics for all checklists in a job
-    
-    Args:
-        db: Database session
-        job_id: ID of the job
-    
-    Returns:
-        Dictionary with aggregate statistics
-    """
-    # Query to get aggregated stats
-    # stats = (
-    #     db.query(
-    #         func.count(ChecklistItem.id).label('total_items'),
-    #         func.sum(func.cast(ChecklistItem.checked, Integer)).label('checked_items'),
-    #         func.sum(
-    #             func.case(
-    #                 (ChecklistItem.status == 'pending', 1),
-    #                 else_=0
-    #             )
-    #         ).label('pending_items'),
-    #         func.sum(
-    #             func.case(
-    #                 (ChecklistItem.status == 'approved', 1),
-    #                 else_=0
-    #             )
-    #         ).label('approved_items')
-    #     )
-    #     .join(Checklist, ChecklistItem.checklist_id == Checklist.id)
-    #     .join(Checklist.jobs)
-    #     .filter(Job.id == job_id)
-    #     .first()
-    # )
 
-
-    stats = (
-    db.query(
-        func.count(ChecklistItem.id).label('total_items'),
-        func.sum(func.cast(ChecklistItem.checked, Integer)).label('checked_items'),
-        func.sum(
-            func.case(
-                [(ChecklistItem.status == 'pending', 1)],  # Use list syntax for conditionals
-                else_=0
-            )
-        ).label('pending_items'),
-        func.sum(
-            func.case(
-                [(ChecklistItem.status == 'approved', 1)],  # Use list syntax for conditionals
-                else_=0
-            )
-        ).label('approved_items')
-    )
-    .join(Checklist, ChecklistItem.checklist_id == Checklist.id)
-    .join(Checklist.jobs)
-    .filter(Job.id == job_id)
-    .first()
-    )
-
-    
-
-    
-    total = stats.total_items or 0
-    checked = stats.checked_items or 0
-    
-    completion_percentage = round((checked / total) * 100, 2) if total > 0 else 0.0
-    
-    return {
-        "total_items": total,
-        "checked_count": checked,
-        "pending_count": stats.pending_items or 0,
-        "approved_count": stats.approved_items or 0,
-        "completion_percentage": completion_percentage
-    }
-
-
-# ==================== Query Functions ====================
+# # ==================== Query Functions ====================
 
 def get_checklist_with_items(
     checklist_id: int,
@@ -284,6 +240,37 @@ def get_checklist_with_items(
     return checklist, items
 
 
+
+def get_job_checklist_statuses(
+    job_id: int,
+    checklist_id: int,
+    db: Session
+) -> List[JobChecklistItemStatus]:
+    """
+    Fetch all checklist item statuses for a specific job
+    
+    Args:
+        job_id: ID of the job
+        checklist_id: ID of the checklist
+        db: Database session
+    
+    Returns:
+        List of JobChecklistItemStatus objects ordered by checklist item position
+    """
+    statuses = (
+        db.query(JobChecklistItemStatus)
+        .join(ChecklistItem)
+        .filter(
+            JobChecklistItemStatus.job_id == job_id,
+            ChecklistItem.checklist_id == checklist_id
+        )
+        .order_by(ChecklistItem.position)
+        .all()
+    )
+    
+    return statuses
+
+
 def get_job_checklists(
     job_id: int,
     db: Session,
@@ -308,7 +295,7 @@ def get_job_checklists(
     return query.all()
 
 
-# ==================== Batch Update Functions ====================
+# # ==================== Batch Update Functions ====================
 
 def apply_batch_updates(
     items_map: Dict[int, ChecklistItem],
@@ -381,38 +368,38 @@ def apply_batch_updates(
         )
 
 
-# ==================== Status Validation ====================
+# # ==================== Status Validation ====================
 
-def validate_status_transition(
-    current_status: str,
-    new_status: str
-) -> bool:
-    """
-    Validate if status transition is allowed
+# def validate_status_transition(
+#     current_status: str,
+#     new_status: str
+# ) -> bool:
+#     """
+#     Validate if status transition is allowed
     
-    Args:
-        current_status: Current item status
-        new_status: New status to transition to
+#     Args:
+#         current_status: Current item status
+#         new_status: New status to transition to
     
-    Returns:
-        True if transition is allowed
+#     Returns:
+#         True if transition is allowed
     
-    This can be extended to enforce specific workflow rules
-    For example:
-    - update -> pending (allowed)
-    - pending -> approved (allowed)
-    - approved -> update (not allowed)
-    """
-    # Define allowed transitions
-    allowed_transitions = {
-        "update": ["pending", "approved"],
-        "pending": ["approved", "update"],
-        "approved": ["update"]  # Allow going back for corrections
-    }
+#     This can be extended to enforce specific workflow rules
+#     For example:
+#     - update -> pending (allowed)
+#     - pending -> approved (allowed)
+#     - approved -> update (not allowed)
+#     """
+#     # Define allowed transitions
+#     allowed_transitions = {
+#         "update": ["pending", "approved"],
+#         "pending": ["approved", "update"],
+#         "approved": ["update"]  # Allow going back for corrections
+#     }
     
-    # If same status, always allowed
-    if current_status == new_status:
-        return True
+#     # If same status, always allowed
+#     if current_status == new_status:
+#         return True
     
-    # Check if transition is in allowed list
-    return new_status in allowed_transitions.get(current_status, [])
+#     # Check if transition is in allowed list
+#     return new_status in allowed_transitions.get(current_status, [])

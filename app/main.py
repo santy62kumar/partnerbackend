@@ -17,8 +17,8 @@ from app.routes.analytics import router as analytics_router
 
 
 
-url = 'https://modula.odoo.com'  # Replace with your Odoo instance URL
-db = 'modula'  # Odoo database name
+url = 'https://modula11.odoo.com'  # Replace with your Odoo instance URL
+db = 'modula11'  # Odoo database name
 username = 'installation@modula.in'  # Odoo login username
 password = 'Modula@2026'  # Odoo login password
 
