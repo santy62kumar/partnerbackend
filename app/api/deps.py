@@ -115,7 +115,7 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)  # ✅ Changed
 ) -> ip:
     token = credentials.credentials  # ✅ Get token this way
-    print(f"🔑 Token received: {token[:20]}...")
+    # print(f"🔑 Token received: {token[:20]}...")
     
     # Verify token
     payload = verify_token(token)

@@ -195,6 +195,9 @@ async def batch_update_items(
     
     # Commit changes
     db.commit()
+
+    result = get_job_checklist_items_with_status(job_id, checklist_id, db)
+    stats = result["stats"]
     
     # Refresh all updated records
     for status_record in updated_statuses:
@@ -223,7 +226,12 @@ async def batch_update_items(
         success=True,
         message=f"Successfully updated {len(updated_statuses)} item(s)",
         updated_count=len(updated_statuses),
-        items=items_response
+        items=items_response,
+        total_items=stats["total_items"],
+        checked_count=stats["checked_count"],
+        pending_count=stats["pending_count"],
+        approved_count=stats["approved_count"],
+        completion_percentage=stats["completion_percentage"]
     )
 
 
@@ -569,6 +577,7 @@ async def get_job_checklists_summary(
         # Accumulate for overall stats
         total_items_all += stats["total_items"]
         checked_count_all += stats["checked_count"]
+        approved_count_all += stats["approved_count"]
         
         summary = ChecklistSummaryResponse(
             id=checklist.id,
@@ -581,7 +590,7 @@ async def get_job_checklists_summary(
     
     # Calculate overall completion percentage
     total_checklists_completion_percentage = (
-        round((checked_count_all / total_items_all * 100), 0) 
+        round((approved_count_all / total_items_all * 100), 0) 
         if total_items_all > 0 else 0.0
     )
     

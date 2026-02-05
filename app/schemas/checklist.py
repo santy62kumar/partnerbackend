@@ -271,7 +271,7 @@ class ChecklistItemUpdateRequest(BaseModel):
 
 class BatchUpdateRequest(BaseModel):
     """Schema for batch updating multiple checklist items for a specific job"""
-    job_id: int = Field(..., description="ID of the job", gt=0)
+    # job_id: int = Field(..., description="ID of the job", gt=0)
     updates: List[ChecklistItemUpdateRequest] = Field(
         ..., 
         min_items=1,
@@ -311,6 +311,11 @@ class BatchUpdateResponse(BaseModel):
     message: str
     updated_count: int
     items: List[dict]  # Return items with their status
+    total_items: int
+    checked_count: int
+    pending_count: int
+    approved_count: int
+    completion_percentage: float
 
     class Config:
         json_schema_extra = {

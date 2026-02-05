@@ -188,7 +188,7 @@ def get_job_checklist_items_with_status(
         })
     
     # Calculate completion percentage
-    completion_percentage = round((checked_count / total_items * 100), 2) if total_items > 0 else 0.0
+    completion_percentage = round((approved_count / total_items * 100), 2) if total_items > 0 else 0.0
     
     # Return both items and stats
     return {
